@@ -31,8 +31,9 @@ Click any markdown file in the explorer to expand it and see its headings. Click
 
 ## Installation
 
-1. Obsidian Settings → Community Plugins → Browse
-2. Search for "Navigate Headings"
-3. Click Install and Enable
+1. Download the latest release from [GitHub](https://github.com/Rumcajsev/obsidian-navigate-headings/releases)
+2. Extract the folder into `.obsidian/plugins/` in your vault
+3. Reload Obsidian (Cmd+R or restart)
+4. Enable the plugin in Settings → Community Plugins
 
 That's it! Enjoy navigating your documents.
