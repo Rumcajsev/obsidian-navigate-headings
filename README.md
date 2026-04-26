@@ -1,13 +1,23 @@
-# Navigate Headings
-
-An Obsidian plugin that shows your markdown file headings in the file explorer. Click a file to see its heading structure, click a heading to jump to it.
-
-## What It Does
-
-- **Expand files in the explorer** to see all their headings as a collapsible tree
-- **Click headings to navigate** directly to them in the editor
-- **See where you are** with auto-highlighting of your current scroll position
-- **Customize the view** — choose how many heading levels to show and which auto-expand
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/demo.gif" alt="Navigate Headings Demo" width="100%">
+    </td>
+    <td width="50%" valign="top" style="padding-left: 20px;">
+      <h1>Navigate Headings</h1>
+      <p style="font-size: 16px; line-height: 1.6;">
+        See and jump between all your file headings directly in the explorer. No more switching tabs to check your document structure.
+      </p>
+      <h3>Why Use It</h3>
+      <ul style="font-size: 14px;">
+        <li>Navigate documents without leaving the file explorer</li>
+        <li>Jump to any section with one click</li>
+        <li>See your current position as you scroll</li>
+        <li>Works with your existing Obsidian setup</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ## How to Use
 
@@ -25,6 +35,4 @@ Click any markdown file in the explorer to expand it and see its headings. Click
 2. Search for "Navigate Headings"
 3. Click Install and Enable
 
-## That's It
-
-Enjoy navigating your documents without leaving the file explorer!
+That's it! Enjoy navigating your documents.
