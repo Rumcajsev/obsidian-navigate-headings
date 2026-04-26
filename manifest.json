@@ -1,9 +1,9 @@
 {
   "id": "navigate-headings",
   "name": "Navigate Headings",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.0.0",
-  "description": "Navigate markdown file headings directly in the file explorer. Expand files to see their heading structure as a collapsible tree.",
+  "description": "Navigate markdown file headings and their structure directly in the file explorer.",
   "author": "Bartosz Mazurek",
   "authorUrl": "https://github.com/Rumcajsev",
   "isDesktopOnly": true
