@@ -55,7 +55,7 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     const leaf = this.app.workspace.getLeavesOfType('file-explorer')[0];
     if (!leaf) return;
 
-    const container = leaf.view.containerEl.querySelector('.nav-files-container') as HTMLElement | null;
+    const container = leaf.view.containerEl.querySelector<HTMLElement>('.nav-files-container');
     if (!container || container.hasAttribute('data-hie-init')) return;
 
     container.setAttribute('data-hie-init', 'true');
@@ -255,17 +255,17 @@ export default class HeadingsInExplorerPlugin extends Plugin {
 
       arrowContainer.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
 
-      item.addEventListener('click', async (e) => {
+      item.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.settings.highlightActive) this.setActiveHighlight(item);
         toggle();
-        await this.goToHeading(file, heading);
+        this.goToHeading(file, heading);
       });
     } else {
-      item.addEventListener('click', async (e) => {
+      item.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.settings.highlightActive) this.setActiveHighlight(item);
-        await this.goToHeading(file, heading);
+        this.goToHeading(file, heading);
       });
     }
   }
@@ -384,7 +384,7 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     if (!view.editor) return;
 
     let currentLine: number;
-    const cm = (view.editor as any).cm;
+    const cm = (view.editor as Record<string, unknown>).cm;
     const scroller = view.contentEl.querySelector<HTMLElement>('.cm-scroller');
 
     if (cm?.posAtCoords && scroller) {
