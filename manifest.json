@@ -1,0 +1,10 @@
+{
+  "id": "headings-in-explorer",
+  "name": "Headings in Explorer",
+  "version": "1.0.0",
+  "minAppVersion": "1.0.0",
+  "description": "Expand markdown files in the file explorer to show their headings as a navigable tree",
+  "author": "Bartek",
+  "authorUrl": "",
+  "isDesktopOnly": true
+}

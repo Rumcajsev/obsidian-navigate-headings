@@ -1,0 +1,113 @@
+/* File-level arrow container — same positioning as Obsidian's .tree-item-icon,
+   with explicit height so it vertically centres inside .nav-file-title */
+.hie-file-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin-inline-start: calc(-1 * var(--size-4-5, 20px));
+  width: var(--size-4-4, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Grid wrapper animates from 0fr → 1fr on open */
+.hie-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.hie-wrapper.hie-open {
+  grid-template-rows: 1fr;
+}
+
+/* Children containers mirror Obsidian's .tree-item-children indentation */
+.hie-children {
+  overflow: hidden;
+  min-height: 0;
+  padding-inline-start: var(--nav-item-children-padding-start, 4px);
+  margin-inline-start: var(--nav-item-children-margin-start, 12px);
+}
+
+.hie-sub-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding-inline-start: var(--nav-item-children-padding-start, 4px);
+  margin-inline-start: var(--nav-item-children-margin-start, 12px);
+}
+
+/* Indent guides via border — same as Obsidian's .tree-item-children */
+.hie-children.hie-indent-guides,
+.hie-sub-inner.hie-indent-guides {
+  border-inline-start: var(--nav-indentation-guide-width) solid var(--nav-indentation-guide-color);
+}
+
+/* Each heading item uses Obsidian's standard nav-item padding so the
+   absolute arrow sits correctly in the 24px left-padding space */
+.hie-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: var(--nav-item-padding, 4px 8px 4px 24px);
+  color: var(--nav-item-color);
+  cursor: pointer;
+  font-size: var(--nav-item-size, 13px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-radius: var(--nav-item-border-radius, 4px);
+  line-height: var(--line-height-tight, 1.3);
+}
+
+.hie-item:hover {
+  background-color: var(--nav-item-background-hover);
+  color: var(--nav-item-color-hover);
+}
+
+.hie-item.hie-active {
+  background-color: var(--nav-item-background-active);
+  color: var(--nav-item-color-active);
+}
+
+/* Heading-level arrow — absolute in the padding area, identical to file arrow */
+.hie-heading-arrow {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin-inline-start: calc(-1 * var(--size-4-5, 20px));
+  width: var(--size-4-4, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Text span inside items — fills remaining width */
+.hie-item-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sub-heading collapsible wrapper — same grid animation as file-level */
+.hie-sub-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.hie-sub-wrapper.hie-open {
+  grid-template-rows: 1fr;
+}
+
+/* Visual hierarchy hints — same as Obsidian applies to deeper folder levels */
+.hie-h1 { font-weight: 500; }
+.hie-h3,
+.hie-h4,
+.hie-h5,
+.hie-h6 { font-size: calc(var(--nav-item-size, 13px) - 1px); }
+.hie-h4 { opacity: 0.85; }
+.hie-h5 { opacity: 0.75; }
+.hie-h6 { opacity: 0.65; }
+
