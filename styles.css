@@ -101,13 +101,4 @@
   grid-template-rows: 1fr;
 }
 
-/* Visual hierarchy hints — same as Obsidian applies to deeper folder levels */
-.hie-h1 { font-weight: 500; }
-.hie-h3,
-.hie-h4,
-.hie-h5,
-.hie-h6 { font-size: calc(var(--nav-item-size, 13px) - 1px); }
-.hie-h4 { opacity: 0.85; }
-.hie-h5 { opacity: 0.75; }
-.hie-h6 { opacity: 0.65; }
 
