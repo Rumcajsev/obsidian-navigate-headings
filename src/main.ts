@@ -1,5 +1,10 @@
 import { App, Plugin, PluginSettingTab, Setting, TFile, MarkdownView, setIcon } from 'obsidian';
 
+interface CMEditorView {
+  posAtCoords: (coords: { x: number; y: number }) => number | null;
+  state: { doc: { lineAt: (pos: number) => { number: number } } };
+}
+
 interface Heading {
   level: number;
   text: string;
@@ -134,8 +139,8 @@ export default class HeadingsInExplorerPlugin extends Plugin {
   }
 
   private onFileModified(file: TFile) {
-    clearTimeout(this.modifyTimers.get(file.path));
-    this.modifyTimers.set(file.path, setTimeout(() => {
+    activeWindow.clearTimeout(this.modifyTimers.get(file.path));
+    this.modifyTimers.set(file.path, activeWindow.setTimeout(() => {
       this.modifyTimers.delete(file.path);
       const titleEl = this.getExplorerTitleEl(file.path);
       if (!titleEl) return;
@@ -171,7 +176,7 @@ export default class HeadingsInExplorerPlugin extends Plugin {
       this.expandHeadings(path, titleEl);
       const file = this.app.vault.getAbstractFileByPath(path);
       // Delay to let Obsidian open the file before we look for the editor view.
-      if (file instanceof TFile) setTimeout(() => this.setupEditorTracking(file), 50);
+      if (file instanceof TFile) activeWindow.setTimeout(() => this.setupEditorTracking(file), 50);
     }
   }
 
@@ -384,7 +389,7 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     if (!view.editor) return;
 
     let currentLine: number;
-    const cm = (view.editor as Record<string, unknown>).cm;
+    const cm = (view.editor as { cm?: CMEditorView }).cm;
     const scroller = view.contentEl.querySelector<HTMLElement>('.cm-scroller');
 
     if (cm?.posAtCoords && scroller) {
@@ -407,9 +412,10 @@ export default class HeadingsInExplorerPlugin extends Plugin {
       if (line <= currentLine && line > bestLine) { bestLine = line; bestItem = item; }
     });
 
-    let displayItem = bestItem;
+    let displayItem: HTMLElement | null = bestItem;
     while (displayItem) {
-      const subWrapper = displayItem.closest<HTMLElement>('.hie-sub-wrapper');
+      const current: HTMLElement = displayItem;
+      const subWrapper = current.closest<HTMLElement>('.hie-sub-wrapper');
       if (!subWrapper || subWrapper.classList.contains('hie-open')) break;
       displayItem = subWrapper.closest<HTMLElement>('.hie-heading-group')
         ?.querySelector<HTMLElement>(':scope > .hie-item') ?? null;
@@ -421,12 +427,12 @@ export default class HeadingsInExplorerPlugin extends Plugin {
   private async goToHeading(file: TFile, heading: Heading) {
     await this.app.workspace.openLinkText(`${file.basename}#${heading.text}`, file.path, false);
     if (this.settings.highlightActive) {
-      setTimeout(() => this.setupEditorTracking(file), 50);
+      activeWindow.setTimeout(() => this.setupEditorTracking(file), 50);
     }
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<HeadingsInExplorerSettings>);
   }
 
   async saveSettings() {
@@ -435,11 +441,11 @@ export default class HeadingsInExplorerPlugin extends Plugin {
 
   onunload() {
     this.clearEditorTracking();
-    for (const timer of this.modifyTimers.values()) clearTimeout(timer);
-    document.querySelectorAll('.hie-wrapper').forEach(el => el.remove());
-    document.querySelectorAll('.hie-file-arrow').forEach(el => el.remove());
-    document.querySelectorAll('[data-hie]').forEach(el => el.removeAttribute('data-hie'));
-    document.querySelectorAll('[data-hie-init]').forEach(el => el.removeAttribute('data-hie-init'));
+    for (const timer of this.modifyTimers.values()) activeWindow.clearTimeout(timer);
+    activeDocument.querySelectorAll('.hie-wrapper').forEach(el => el.remove());
+    activeDocument.querySelectorAll('.hie-file-arrow').forEach(el => el.remove());
+    activeDocument.querySelectorAll('[data-hie]').forEach(el => el.removeAttribute('data-hie'));
+    activeDocument.querySelectorAll('[data-hie-init]').forEach(el => el.removeAttribute('data-hie-init'));
   }
 }
 
