@@ -259,13 +259,13 @@ export default class HeadingsInExplorerPlugin extends Plugin {
         e.stopPropagation();
         if (this.settings.highlightActive) this.setActiveHighlight(item);
         toggle();
-        this.goToHeading(file, heading);
+        void this.goToHeading(file, heading);
       });
     } else {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.settings.highlightActive) this.setActiveHighlight(item);
-        this.goToHeading(file, heading);
+        void this.goToHeading(file, heading);
       });
     }
   }
