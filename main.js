@@ -125,8 +125,8 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     this.setupEditorTracking(file);
   }
   onFileModified(file) {
-    clearTimeout(this.modifyTimers.get(file.path));
-    this.modifyTimers.set(file.path, setTimeout(() => {
+    activeWindow.clearTimeout(this.modifyTimers.get(file.path));
+    this.modifyTimers.set(file.path, activeWindow.setTimeout(() => {
       var _a, _b;
       this.modifyTimers.delete(file.path);
       const titleEl = this.getExplorerTitleEl(file.path);
@@ -159,7 +159,7 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     } else {
       this.expandHeadings(path, titleEl);
       const file = this.app.vault.getAbstractFileByPath(path);
-      if (file instanceof import_obsidian.TFile) setTimeout(() => this.setupEditorTracking(file), 50);
+      if (file instanceof import_obsidian.TFile) activeWindow.setTimeout(() => this.setupEditorTracking(file), 50);
     }
   }
   expandHeadings(path, titleEl, animate = true) {
@@ -225,17 +225,17 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
         e.stopPropagation();
         toggle();
       });
-      item.addEventListener("click", async (e) => {
+      item.addEventListener("click", (e) => {
         e.stopPropagation();
         if (this.settings.highlightActive) this.setActiveHighlight(item);
         toggle();
-        await this.goToHeading(file, heading);
+        void this.goToHeading(file, heading);
       });
     } else {
-      item.addEventListener("click", async (e) => {
+      item.addEventListener("click", (e) => {
         e.stopPropagation();
         if (this.settings.highlightActive) this.setActiveHighlight(item);
-        await this.goToHeading(file, heading);
+        void this.goToHeading(file, heading);
       });
     }
   }
@@ -362,7 +362,8 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     });
     let displayItem = bestItem;
     while (displayItem) {
-      const subWrapper = displayItem.closest(".hie-sub-wrapper");
+      const current = displayItem;
+      const subWrapper = current.closest(".hie-sub-wrapper");
       if (!subWrapper || subWrapper.classList.contains("hie-open")) break;
       displayItem = (_c = (_b = subWrapper.closest(".hie-heading-group")) == null ? void 0 : _b.querySelector(":scope > .hie-item")) != null ? _c : null;
     }
@@ -371,7 +372,7 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
   async goToHeading(file, heading) {
     await this.app.workspace.openLinkText(`${file.basename}#${heading.text}`, file.path, false);
     if (this.settings.highlightActive) {
-      setTimeout(() => this.setupEditorTracking(file), 50);
+      activeWindow.setTimeout(() => this.setupEditorTracking(file), 50);
     }
   }
   async loadSettings() {
@@ -382,11 +383,11 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
   }
   onunload() {
     this.clearEditorTracking();
-    for (const timer of this.modifyTimers.values()) clearTimeout(timer);
-    document.querySelectorAll(".hie-wrapper").forEach((el) => el.remove());
-    document.querySelectorAll(".hie-file-arrow").forEach((el) => el.remove());
-    document.querySelectorAll("[data-hie]").forEach((el) => el.removeAttribute("data-hie"));
-    document.querySelectorAll("[data-hie-init]").forEach((el) => el.removeAttribute("data-hie-init"));
+    for (const timer of this.modifyTimers.values()) activeWindow.clearTimeout(timer);
+    activeDocument.querySelectorAll(".hie-wrapper").forEach((el) => el.remove());
+    activeDocument.querySelectorAll(".hie-file-arrow").forEach((el) => el.remove());
+    activeDocument.querySelectorAll("[data-hie]").forEach((el) => el.removeAttribute("data-hie"));
+    activeDocument.querySelectorAll("[data-hie-init]").forEach((el) => el.removeAttribute("data-hie-init"));
   }
 };
 var HeadingsInExplorerSettingTab = class extends import_obsidian.PluginSettingTab {

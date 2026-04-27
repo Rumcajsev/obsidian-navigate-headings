@@ -1,7 +1,7 @@
 {
   "id": "navigate-headings",
   "name": "Navigate Headings",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minAppVersion": "1.0.0",
   "description": "Navigate markdown file headings and their structure directly in the file explorer.",
   "author": "Bartosz Mazurek",
