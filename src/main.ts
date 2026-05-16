@@ -20,12 +20,14 @@ interface HeadingsInExplorerSettings {
   maxLevel: number;
   defaultOpenLevel: number;
   highlightActive: boolean;
+  arrowExpandsAll: boolean;
 }
 
 const DEFAULT_SETTINGS: HeadingsInExplorerSettings = {
   maxLevel: 3,
   defaultOpenLevel: 2,
   highlightActive: true,
+  arrowExpandsAll: true,
 };
 
 export default class HeadingsInExplorerPlugin extends Plugin {
@@ -107,15 +109,17 @@ export default class HeadingsInExplorerPlugin extends Plugin {
       e.stopPropagation();
       const titleEl = target.closest<HTMLElement>('.nav-file-title');
       const path = titleEl?.dataset.path;
-      if (path && titleEl) this.toggleHeadings(path, titleEl);
+      if (path && titleEl) this.toggleHeadings(path, titleEl, this.settings.arrowExpandsAll);
       return;
     }
+
+    if (this.settings.defaultOpenLevel === 0) return;
 
     const titleEl = target.closest<HTMLElement>('.nav-file-title');
     if (!titleEl) return;
     const path = titleEl.dataset.path;
     if (!path?.endsWith('.md')) return;
-    this.toggleHeadings(path, titleEl);
+    this.toggleHeadings(path, titleEl, false);
   }
 
   private onActiveLeafChange() {
@@ -168,20 +172,20 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     );
   }
 
-  private toggleHeadings(path: string, titleEl: HTMLElement) {
+  private toggleHeadings(path: string, titleEl: HTMLElement, expandAll = false) {
     const navFile = titleEl.closest<HTMLElement>('.nav-file');
     if (!navFile) return;
     if (navFile.querySelector('.hie-wrapper')) {
       this.collapseHeadings(titleEl);
     } else {
-      this.expandHeadings(path, titleEl);
+      this.expandHeadings(path, titleEl, true, expandAll);
       const file = this.app.vault.getAbstractFileByPath(path);
       // Delay to let Obsidian open the file before we look for the editor view.
       if (file instanceof TFile) activeWindow.setTimeout(() => this.setupEditorTracking(file), 50);
     }
   }
 
-  private expandHeadings(path: string, titleEl: HTMLElement, animate = true) {
+  private expandHeadings(path: string, titleEl: HTMLElement, animate = true, expandAll = false) {
     const navFile = titleEl.closest<HTMLElement>('.nav-file');
     if (!navFile) return;
 
@@ -195,7 +199,7 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     const childrenEl = wrapper.createEl('div', { cls: 'hie-children' });
     childrenEl.classList.add('hie-indent-guides');
 
-    this.renderNodes(this.buildTree(headings), childrenEl, file);
+    this.renderNodes(this.buildTree(headings), childrenEl, file, expandAll);
 
     this.setFileArrowCollapsed(titleEl, false);
 
@@ -224,14 +228,14 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     return roots;
   }
 
-  private renderNodes(nodes: HeadingNode[], container: HTMLElement, file: TFile) {
-    for (const node of nodes) this.renderNode(node, container, file);
+  private renderNodes(nodes: HeadingNode[], container: HTMLElement, file: TFile, expandAll = false) {
+    for (const node of nodes) this.renderNode(node, container, file, expandAll);
   }
 
-  private renderNode(node: HeadingNode, container: HTMLElement, file: TFile) {
+  private renderNode(node: HeadingNode, container: HTMLElement, file: TFile, expandAll = false) {
     const { heading, children } = node;
     const hasChildren = children.length > 0;
-    const startExpanded = heading.level < this.settings.defaultOpenLevel && this.settings.defaultOpenLevel > 0;
+    const startExpanded = expandAll || (heading.level < this.settings.defaultOpenLevel && this.settings.defaultOpenLevel > 0);
 
     const group = container.createEl('div', { cls: 'hie-heading-group' });
     const item = group.createEl('div', { cls: `hie-item hie-h${heading.level}` });
@@ -252,7 +256,7 @@ export default class HeadingsInExplorerPlugin extends Plugin {
       if (startExpanded) subWrapper.classList.add('hie-open');
       const subInner = subWrapper.createEl('div', { cls: 'hie-sub-inner' });
       subInner.classList.add('hie-indent-guides');
-      this.renderNodes(children, subInner, file);
+      this.renderNodes(children, subInner, file, expandAll);
 
       const toggle = () => {
         const open = subWrapper.classList.toggle('hie-open');
@@ -516,6 +520,20 @@ class HeadingsInExplorerSettingTab extends PluginSettingTab {
             this.plugin.settings.defaultOpenLevel = parseInt(value);
             await this.plugin.saveSettings();
             this.plugin.refreshExpanded();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName('Arrow expands')
+      .setDesc('All levels opens every heading at once. Next level only shows the top level and lets you expand deeper manually.')
+      .addDropdown(drop => {
+        drop
+          .addOption('all', 'All levels')
+          .addOption('next', 'Next level only')
+          .setValue(this.plugin.settings.arrowExpandsAll ? 'all' : 'next')
+          .onChange(async (value) => {
+            this.plugin.settings.arrowExpandsAll = value === 'all';
+            await this.plugin.saveSettings();
           });
       });
   }

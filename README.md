@@ -21,13 +21,18 @@
 
 ## How to Use
 
-Click any markdown file in the explorer to expand it and see its headings. Click a heading to jump to it. Click again to collapse/expand its children.
+- **Click a file title** — expands its headings automatically, down to the level set in *Auto-expand down to*. If that setting is *Nothing*, clicking the title just opens the file with no expansion.
+- **Click the arrow** next to a file — always toggles the headings panel regardless of the auto-expand setting. Expands either all levels or just the top level depending on the *Arrow expands* setting.
+- **Click a heading** — jumps to that section in the editor. If the heading has children, it also toggles them open/closed.
 
 ## Settings
 
-- **Highlight active heading** — Highlights which heading you're currently reading
-- **Show headings up to** — How deep to go (H1 only, H1–H2, H1–H3, etc.)
-- **Auto-expand down to** — Which levels open automatically (Nothing, H1, H2, H3, etc.)
+| Setting | Default | Description |
+|---|---|---|
+| **Show headings up to** | H3 | The maximum heading depth shown in the explorer. Headings deeper than this are never displayed. |
+| **Auto-expand down to** | H2 | How deep the panel opens when you click a file title or switch to a file. *Nothing* disables automatic expansion entirely — only the arrow will open the panel. |
+| **Arrow expands** | All levels | Controls what happens when you click the arrow next to a file. *All levels* opens every heading at once. *Next level only* shows just the top-level headings and lets you expand deeper sections manually. |
+| **Highlight active heading** | On | Highlights the heading in the explorer that matches your current scroll position in the editor. |
 
 ## Installation
 

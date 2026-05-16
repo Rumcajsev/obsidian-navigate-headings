@@ -26,7 +26,8 @@ var import_obsidian = require("obsidian");
 var DEFAULT_SETTINGS = {
   maxLevel: 3,
   defaultOpenLevel: 2,
-  highlightActive: true
+  highlightActive: true,
+  arrowExpandsAll: true
 };
 var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
   constructor() {
@@ -98,14 +99,15 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
       e.stopPropagation();
       const titleEl2 = target.closest(".nav-file-title");
       const path2 = titleEl2 == null ? void 0 : titleEl2.dataset.path;
-      if (path2 && titleEl2) this.toggleHeadings(path2, titleEl2);
+      if (path2 && titleEl2) this.toggleHeadings(path2, titleEl2, this.settings.arrowExpandsAll);
       return;
     }
+    if (this.settings.defaultOpenLevel === 0) return;
     const titleEl = target.closest(".nav-file-title");
     if (!titleEl) return;
     const path = titleEl.dataset.path;
     if (!(path == null ? void 0 : path.endsWith(".md"))) return;
-    this.toggleHeadings(path, titleEl);
+    this.toggleHeadings(path, titleEl, false);
   }
   onActiveLeafChange() {
     var _a;
@@ -152,18 +154,18 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
       `.nav-file-title[data-path="${CSS.escape(path)}"]`
     );
   }
-  toggleHeadings(path, titleEl) {
+  toggleHeadings(path, titleEl, expandAll = false) {
     const navFile = titleEl.closest(".nav-file");
     if (!navFile) return;
     if (navFile.querySelector(".hie-wrapper")) {
       this.collapseHeadings(titleEl);
     } else {
-      this.expandHeadings(path, titleEl);
+      this.expandHeadings(path, titleEl, true, expandAll);
       const file = this.app.vault.getAbstractFileByPath(path);
       if (file instanceof import_obsidian.TFile) activeWindow.setTimeout(() => this.setupEditorTracking(file), 50);
     }
   }
-  expandHeadings(path, titleEl, animate = true) {
+  expandHeadings(path, titleEl, animate = true, expandAll = false) {
     const navFile = titleEl.closest(".nav-file");
     if (!navFile) return;
     const file = this.app.vault.getAbstractFileByPath(path);
@@ -173,7 +175,7 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     const wrapper = navFile.createEl("div", { cls: "hie-wrapper" });
     const childrenEl = wrapper.createEl("div", { cls: "hie-children" });
     childrenEl.classList.add("hie-indent-guides");
-    this.renderNodes(this.buildTree(headings), childrenEl, file);
+    this.renderNodes(this.buildTree(headings), childrenEl, file, expandAll);
     this.setFileArrowCollapsed(titleEl, false);
     if (animate) {
       requestAnimationFrame(() => wrapper.classList.add("hie-open"));
@@ -196,13 +198,13 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     }
     return roots;
   }
-  renderNodes(nodes, container, file) {
-    for (const node of nodes) this.renderNode(node, container, file);
+  renderNodes(nodes, container, file, expandAll = false) {
+    for (const node of nodes) this.renderNode(node, container, file, expandAll);
   }
-  renderNode(node, container, file) {
+  renderNode(node, container, file, expandAll = false) {
     const { heading, children } = node;
     const hasChildren = children.length > 0;
-    const startExpanded = heading.level < this.settings.defaultOpenLevel && this.settings.defaultOpenLevel > 0;
+    const startExpanded = expandAll || heading.level < this.settings.defaultOpenLevel && this.settings.defaultOpenLevel > 0;
     const group = container.createEl("div", { cls: "hie-heading-group" });
     const item = group.createEl("div", { cls: `hie-item hie-h${heading.level}` });
     item.dataset.line = String(heading.line);
@@ -217,7 +219,7 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
       if (startExpanded) subWrapper.classList.add("hie-open");
       const subInner = subWrapper.createEl("div", { cls: "hie-sub-inner" });
       subInner.classList.add("hie-indent-guides");
-      this.renderNodes(children, subInner, file);
+      this.renderNodes(children, subInner, file, expandAll);
       const toggle = () => {
         const open = subWrapper.classList.toggle("hie-open");
         collapseIcon.classList.toggle("is-collapsed", !open);
@@ -423,6 +425,12 @@ var HeadingsInExplorerSettingTab = class extends import_obsidian.PluginSettingTa
         this.plugin.settings.defaultOpenLevel = parseInt(value);
         await this.plugin.saveSettings();
         this.plugin.refreshExpanded();
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName("Arrow expands").setDesc("All levels opens every heading at once. Next level only shows the top level and lets you expand deeper manually.").addDropdown((drop) => {
+      drop.addOption("all", "All levels").addOption("next", "Next level only").setValue(this.plugin.settings.arrowExpandsAll ? "all" : "next").onChange(async (value) => {
+        this.plugin.settings.arrowExpandsAll = value === "all";
+        await this.plugin.saveSettings();
       });
     });
   }
