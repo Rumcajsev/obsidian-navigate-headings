@@ -112,14 +112,15 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
     const file = view == null ? void 0 : view.file;
     if (file) this.setupEditorTracking(file);
-    if (!file || file.path === this.autoExpandedPath) return;
+    if (!file || this.settings.defaultOpenLevel === 0) return;
+    if (file.path === this.autoExpandedPath) return;
     if (this.autoExpandedPath) {
       const prev = this.getExplorerTitleEl(this.autoExpandedPath);
       if (prev) this.collapseHeadings(prev);
     }
     this.autoExpandedPath = file.path;
     const titleEl = this.getExplorerTitleEl(file.path);
-    if (this.settings.defaultOpenLevel > 0 && titleEl && !((_a = titleEl.closest(".nav-file")) == null ? void 0 : _a.querySelector(".hie-wrapper"))) {
+    if (titleEl && !((_a = titleEl.closest(".nav-file")) == null ? void 0 : _a.querySelector(".hie-wrapper"))) {
       this.expandHeadings(file.path, titleEl);
     }
     this.setupEditorTracking(file);

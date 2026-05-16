@@ -123,7 +123,8 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     const file = view?.file;
     if (file) this.setupEditorTracking(file);
 
-    if (!file || file.path === this.autoExpandedPath) return;
+    if (!file || this.settings.defaultOpenLevel === 0) return;
+    if (file.path === this.autoExpandedPath) return;
 
     if (this.autoExpandedPath) {
       const prev = this.getExplorerTitleEl(this.autoExpandedPath);
@@ -132,7 +133,7 @@ export default class HeadingsInExplorerPlugin extends Plugin {
 
     this.autoExpandedPath = file.path;
     const titleEl = this.getExplorerTitleEl(file.path);
-    if (this.settings.defaultOpenLevel > 0 && titleEl && !titleEl.closest('.nav-file')?.querySelector('.hie-wrapper')) {
+    if (titleEl && !titleEl.closest('.nav-file')?.querySelector('.hie-wrapper')) {
       this.expandHeadings(file.path, titleEl);
     }
     this.setupEditorTracking(file);
