@@ -114,8 +114,16 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
     const file = view == null ? void 0 : view.file;
     if (file) this.setupEditorTracking(file);
-    if (!file || this.settings.defaultOpenLevel === 0) return;
-    if (file.path === this.autoExpandedPath) return;
+    if (!file) return;
+    if (file.path === this.autoExpandedPath) {
+      this.setupEditorTracking(file);
+      return;
+    }
+    if (this.settings.defaultOpenLevel === 0) {
+      this.autoExpandedPath = file.path;
+      this.setupEditorTracking(file);
+      return;
+    }
     if (this.autoExpandedPath) {
       const prev = this.getExplorerTitleEl(this.autoExpandedPath);
       if (prev) this.collapseHeadings(prev);
@@ -298,16 +306,11 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
   setupEditorTracking(file) {
     var _a, _b;
     if (!this.settings.highlightActive) return;
-    (_a = this.trackingCleanup) == null ? void 0 : _a.call(this);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
+    if (!view || ((_a = view.file) == null ? void 0 : _a.path) !== file.path) return;
+    (_b = this.trackingCleanup) == null ? void 0 : _b.call(this);
     this.trackingCleanup = null;
     this.trackedFilePath = file.path;
-    const view = (_b = this.app.workspace.getLeavesOfType("markdown").find((l) => {
-      var _a2;
-      return ((_a2 = l.view.file) == null ? void 0 : _a2.path) === file.path;
-    })) == null ? void 0 : _b.view;
-    if (!view) return;
-    const scroller = view.contentEl.querySelector(".cm-scroller");
-    if (!scroller) return;
     let rafPending = false;
     const onScroll = () => {
       if (rafPending) return;
@@ -318,11 +321,11 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
       });
     };
     const onInteract = () => this.updateActiveHeading(view, file);
-    scroller.addEventListener("scroll", onScroll, { passive: true });
+    view.contentEl.addEventListener("scroll", onScroll, { passive: true, capture: true });
     view.contentEl.addEventListener("click", onInteract);
     view.contentEl.addEventListener("keyup", onInteract);
     this.trackingCleanup = () => {
-      scroller.removeEventListener("scroll", onScroll);
+      view.contentEl.removeEventListener("scroll", onScroll, true);
       view.contentEl.removeEventListener("click", onInteract);
       view.contentEl.removeEventListener("keyup", onInteract);
     };
@@ -336,22 +339,40 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
     (_b = this.activeHighlight) == null ? void 0 : _b.classList.remove("hie-active");
     this.activeHighlight = null;
   }
+  getReadingLine(view, file) {
+    const preview = view.contentEl.querySelector(".markdown-preview-view");
+    if (!preview) return -1;
+    const previewRect = preview.getBoundingClientRect();
+    if (!previewRect.height) return -1;
+    const targetY = previewRect.top + previewRect.height * 0.3;
+    const headings = this.getHeadings(file);
+    let bestLine = -1;
+    let bestTop = -Infinity;
+    preview.querySelectorAll("h1, h2, h3, h4, h5, h6").forEach((el) => {
+      var _a, _b;
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= targetY && rect.top > bestTop) {
+        bestTop = rect.top;
+        const text = (_b = (_a = el.textContent) == null ? void 0 : _a.trim()) != null ? _b : "";
+        const match = headings.find((h) => h.text === text);
+        if (match) bestLine = match.line;
+      }
+    });
+    return bestLine;
+  }
   updateActiveHeading(view, file) {
-    var _a, _b, _c;
-    if (!view.editor) return;
+    var _a, _b, _c, _d;
+    const cm = (_a = view.editor) == null ? void 0 : _a.cm;
+    const cmScroller = cm == null ? void 0 : cm.scrollDOM;
     let currentLine;
-    const cm = view.editor.cm;
-    const scroller = view.contentEl.querySelector(".cm-scroller");
-    if ((cm == null ? void 0 : cm.posAtCoords) && scroller) {
-      const rect = scroller.getBoundingClientRect();
-      const readingY = rect.top + rect.height * 0.3;
-      const pos = cm.posAtCoords({ x: rect.left + 10, y: readingY });
-      if (pos == null) return;
-      currentLine = cm.state.doc.lineAt(pos).number - 1;
+    if ((cm == null ? void 0 : cm.lineBlockAtHeight) && cmScroller && cmScroller.clientHeight > 0) {
+      const readingPos = cm.lineBlockAtHeight(cmScroller.scrollTop + cmScroller.clientHeight * 0.3).from;
+      currentLine = cm.state.doc.lineAt(readingPos).number - 1;
     } else {
-      currentLine = view.editor.getCursor().line;
+      currentLine = this.getReadingLine(view, file);
+      if (currentLine < 0) return;
     }
-    const navFile = (_a = this.getExplorerTitleEl(file.path)) == null ? void 0 : _a.closest(".nav-file");
+    const navFile = (_b = this.getExplorerTitleEl(file.path)) == null ? void 0 : _b.closest(".nav-file");
     if (!navFile) return;
     let bestItem = null;
     let bestLine = -1;
@@ -368,7 +389,7 @@ var HeadingsInExplorerPlugin = class extends import_obsidian.Plugin {
       const current = displayItem;
       const subWrapper = current.closest(".hie-sub-wrapper");
       if (!subWrapper || subWrapper.classList.contains("hie-open")) break;
-      displayItem = (_c = (_b = subWrapper.closest(".hie-heading-group")) == null ? void 0 : _b.querySelector(":scope > .hie-item")) != null ? _c : null;
+      displayItem = (_d = (_c = subWrapper.closest(".hie-heading-group")) == null ? void 0 : _c.querySelector(":scope > .hie-item")) != null ? _d : null;
     }
     this.setActiveHighlight(displayItem);
   }
