@@ -1,8 +1,9 @@
 import { App, Plugin, PluginSettingTab, Setting, TFile, MarkdownView, setIcon } from 'obsidian';
 
 interface CMEditorView {
-  posAtCoords: (coords: { x: number; y: number }) => number | null;
+  lineBlockAtHeight: (height: number) => { from: number };
   state: { doc: { lineAt: (pos: number) => { number: number } } };
+  scrollDOM: HTMLElement;
 }
 
 interface Heading {
@@ -127,8 +128,17 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     const file = view?.file;
     if (file) this.setupEditorTracking(file);
 
-    if (!file || this.settings.defaultOpenLevel === 0) return;
-    if (file.path === this.autoExpandedPath) return;
+    if (!file) return;
+    if (file.path === this.autoExpandedPath) {
+      this.setupEditorTracking(file);
+      return;
+    }
+
+    if (this.settings.defaultOpenLevel === 0) {
+      this.autoExpandedPath = file.path;
+      this.setupEditorTracking(file);
+      return;
+    }
 
     if (this.autoExpandedPath) {
       const prev = this.getExplorerTitleEl(this.autoExpandedPath);
@@ -345,17 +355,12 @@ export default class HeadingsInExplorerPlugin extends Plugin {
   setupEditorTracking(file: TFile) {
     if (!this.settings.highlightActive) return;
 
+    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (!view || view.file?.path !== file.path) return;
+
     this.trackingCleanup?.();
     this.trackingCleanup = null;
     this.trackedFilePath = file.path;
-
-    const view = this.app.workspace.getLeavesOfType('markdown')
-      .find(l => (l.view as MarkdownView).file?.path === file.path)
-      ?.view as MarkdownView | undefined;
-    if (!view) return;
-
-    const scroller = view.contentEl.querySelector<HTMLElement>('.cm-scroller');
-    if (!scroller) return;
 
     let rafPending = false;
     const onScroll = () => {
@@ -369,12 +374,12 @@ export default class HeadingsInExplorerPlugin extends Plugin {
 
     const onInteract = () => this.updateActiveHeading(view, file);
 
-    scroller.addEventListener('scroll', onScroll, { passive: true });
+    view.contentEl.addEventListener('scroll', onScroll, { passive: true, capture: true });
     view.contentEl.addEventListener('click', onInteract);
     view.contentEl.addEventListener('keyup', onInteract);
 
     this.trackingCleanup = () => {
-      scroller.removeEventListener('scroll', onScroll);
+      view.contentEl.removeEventListener('scroll', onScroll, true);
       view.contentEl.removeEventListener('click', onInteract);
       view.contentEl.removeEventListener('keyup', onInteract);
     };
@@ -390,21 +395,39 @@ export default class HeadingsInExplorerPlugin extends Plugin {
     this.activeHighlight = null;
   }
 
+  private getReadingLine(view: MarkdownView, file: TFile): number {
+    const preview = view.contentEl.querySelector<HTMLElement>('.markdown-preview-view');
+    if (!preview) return -1;
+    const previewRect = preview.getBoundingClientRect();
+    if (!previewRect.height) return -1;
+    const targetY = previewRect.top + previewRect.height * 0.3;
+
+    const headings = this.getHeadings(file);
+    let bestLine = -1;
+    let bestTop = -Infinity;
+    preview.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= targetY && rect.top > bestTop) {
+        bestTop = rect.top;
+        const text = el.textContent?.trim() ?? '';
+        const match = headings.find(h => h.text === text);
+        if (match) bestLine = match.line;
+      }
+    });
+    return bestLine;
+  }
+
   private updateActiveHeading(view: MarkdownView, file: TFile) {
-    if (!view.editor) return;
+    const cm = (view.editor as unknown as { cm?: CMEditorView } | undefined)?.cm;
+    const cmScroller = cm?.scrollDOM;
 
     let currentLine: number;
-    const cm = (view.editor as { cm?: CMEditorView }).cm;
-    const scroller = view.contentEl.querySelector<HTMLElement>('.cm-scroller');
-
-    if (cm?.posAtCoords && scroller) {
-      const rect = scroller.getBoundingClientRect();
-      const readingY = rect.top + rect.height * 0.3;
-      const pos = cm.posAtCoords({ x: rect.left + 10, y: readingY });
-      if (pos == null) return;
-      currentLine = cm.state.doc.lineAt(pos).number - 1;
+    if (cm?.lineBlockAtHeight && cmScroller && cmScroller.clientHeight > 0) {
+      const readingPos = cm.lineBlockAtHeight(cmScroller.scrollTop + cmScroller.clientHeight * 0.3).from;
+      currentLine = cm.state.doc.lineAt(readingPos).number - 1;
     } else {
-      currentLine = view.editor.getCursor().line;
+      currentLine = this.getReadingLine(view, file);
+      if (currentLine < 0) return;
     }
 
     const navFile = this.getExplorerTitleEl(file.path)?.closest<HTMLElement>('.nav-file');
