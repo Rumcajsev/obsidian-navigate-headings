@@ -36,6 +36,9 @@
 
 ## Installation
 
+Just get it from [official Obsidian plugin page](https://community.obsidian.md/plugins/navigate-headings)!
+
+If you want to install manually:, then:
 1. Download the latest release from [GitHub](https://github.com/Rumcajsev/obsidian-navigate-headings/releases)
 2. Extract the folder into `.obsidian/plugins/` in your vault
 3. Reload Obsidian (Cmd+R or restart)
